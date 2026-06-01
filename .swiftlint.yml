@@ -1,0 +1,55 @@
+included:
+  - Sources
+  - Packages/GMPlayerKit/Sources/GMPlayerKit
+  - Packages/GMPlayerKit/Sources/gmremux-cli
+
+excluded:
+  - build
+  - .build
+  - GMApplePlayer.xcodeproj
+  - Packages/GMPlayerKit/Sources/CFFmpeg
+  - repos
+
+# ── Line length ──────────────────────────────────────────────────────────────
+line_length:
+  warning: 140
+  error: 200
+  ignores_comments: true
+  ignores_urls: true
+
+# ── Disabled rules (too strict / too noisy for this codebase) ────────────────
+disabled_rules:
+  - trailing_whitespace      # swiftformat handles this
+  - todo                     # TODOs are fine during development
+  - identifier_name          # short names like `i`, `x` are OK
+
+# ── Opt-in rules ─────────────────────────────────────────────────────────────
+opt_in_rules:
+  - empty_count              # prefer .isEmpty over .count == 0
+  - closure_spacing          # spaces inside { }
+  - force_unwrapping         # warn on ! force-unwrap
+  - overridden_super_call    # remind to call super
+  - redundant_nil_coalescing # ?? nil is pointless
+  - yoda_condition           # prefer value == literal, not literal == value
+  - sorted_imports           # keep import blocks tidy
+  - implicit_return          # prefer implicit returns in single-expression closures
+
+# ── Rule configuration ────────────────────────────────────────────────────────
+force_unwrapping: warning
+
+function_body_length:
+  warning: 60
+  error: 100
+
+type_body_length:
+  warning: 300
+  error: 500
+
+file_length:
+  warning: 400
+  error: 500
+  ignore_comment_only_lines: true
+
+cyclomatic_complexity:
+  warning: 15
+  error: 25

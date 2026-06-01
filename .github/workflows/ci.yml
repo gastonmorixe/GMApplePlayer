@@ -1,0 +1,173 @@
+name: CI
+
+on:
+  push:
+    branches: [main-oss]
+    tags: ["v*"]
+  pull_request:
+    branches: [main-oss]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Bump together with Scripts/build-ffmpeg.sh when moving FFmpeg versions.
+  FFMPEG_CACHE_PATH: Packages/GMPlayerKit/Frameworks/FFmpeg.xcframework
+
+jobs:
+  # ---------------------------------------------------------------- lint/format
+  # No FFmpeg needed: pure static checks. Runs in parallel with `test`.
+  lint:
+    name: Lint, format & structure
+    runs-on: macos-26
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Select Xcode (latest stable 26.x)
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      # swiftlint is not preinstalled; bash 5 is needed because
+      # Scripts/check-structure.sh uses `mapfile` (the runner ships bash 3.2).
+      - name: Install tooling
+        run: brew install swiftlint swiftformat bash
+
+      - name: SwiftLint + SwiftFormat + structure gate
+        run: ./Scripts/lint.sh
+
+  # ---------------------------------------------------------------------- test
+  # The package test targets link the FFmpeg binary target, so the xcframework
+  # must exist. Build (or restore) the macOS slice, then run the unit tests.
+  test:
+    name: Unit tests
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Select Xcode (latest stable 26.x)
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Cache FFmpeg xcframework
+        id: ffmpeg-cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.FFMPEG_CACHE_PATH }}
+          key: ffmpeg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Scripts/build-ffmpeg.sh') }}
+
+      - name: Build FFmpeg xcframework (macOS slice)
+        if: steps.ffmpeg-cache.outputs.cache-hit != 'true'
+        run: ./Scripts/build-ffmpeg.sh macos
+
+      - name: Run package tests (integration tests skip without a sample MKV)
+        run: |
+          set -o pipefail
+          cd Packages/GMPlayerKit
+          swift test
+
+  # --------------------------------------------------------------------- build
+  # Only runs if BOTH lint and test pass. Produces the shippable .app artifact.
+  build:
+    name: Build macOS app
+    needs: [lint, test]
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Select Xcode (latest stable 26.x)
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Cache FFmpeg xcframework
+        id: ffmpeg-cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.FFMPEG_CACHE_PATH }}
+          key: ffmpeg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Scripts/build-ffmpeg.sh') }}
+
+      - name: Build FFmpeg xcframework (macOS slice)
+        if: steps.ffmpeg-cache.outputs.cache-hit != 'true'
+        run: ./Scripts/build-ffmpeg.sh macos
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      # ARCHS=arm64: the FFmpeg xcframework ships arm64-only slices, so the app
+      # is arm64-only too. A default Release build would try x86_64 + arm64 and
+      # fail to link. The macos-26 runner is arm64, so this is also its native arch.
+      - name: Build macOS app (Release, unsigned, arm64)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project GMApplePlayer.xcodeproj \
+            -scheme GMApplePlayer-macOS \
+            -configuration Release \
+            -destination 'platform=macOS' \
+            -derivedDataPath build/ci-macos \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGNING_ALLOWED=NO \
+            build | xcbeautify
+
+      - name: Package .app
+        run: |
+          APP="build/ci-macos/Build/Products/Release/GMApplePlayer-macOS.app"
+          if [ ! -d "$APP" ]; then
+            echo "::error::Built app not found at $APP"
+            exit 1
+          fi
+          ditto -c -k --sequesterRsrc --keepParent "$APP" GMApplePlayer-macOS.zip
+          echo "Zipped $(du -h GMApplePlayer-macOS.zip | cut -f1) -> GMApplePlayer-macOS.zip"
+
+      - name: Upload macOS app artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: GMApplePlayer-macOS
+          path: GMApplePlayer-macOS.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  # ------------------------------------------------------------------- release
+  # Publishes a GitHub Release only on a v* tag, and only after build (hence
+  # lint + test) is green. Attaches the same artifact the build job produced.
+  release:
+    name: Publish release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: GMApplePlayer-macOS
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            GMApplePlayer-macOS.zip \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes

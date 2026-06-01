@@ -1,0 +1,40 @@
+# SwiftFormat configuration
+# https://github.com/nicklockwood/SwiftFormat
+
+--swiftversion 5.9
+
+# ── Indentation & spacing ─────────────────────────────────────────────────────
+--indent 4
+--indentcase false
+--trimwhitespace always
+--insertlines enabled
+--removelines enabled
+--linebreaks lf
+
+# ── Wrapping ──────────────────────────────────────────────────────────────────
+--maxwidth 140
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--closingparen balanced
+
+# ── Imports ───────────────────────────────────────────────────────────────────
+--importgrouping testable-last
+
+# ── Braces & punctuation ─────────────────────────────────────────────────────
+--allman false
+--elseposition same-line
+--guardelse auto
+--semicolons never
+--commas always
+
+# ── Miscellaneous ─────────────────────────────────────────────────────────────
+--self init-only
+# (do NOT use `--self remove`: it strips `self.` from os.Logger autoclosure
+#  string interpolations where the compiler still requires explicit capture.)
+--redundanttype inferred
+--stripunusedargs closure-only
+--header ignore
+
+# ── Exclusions ────────────────────────────────────────────────────────────────
+--exclude build,.build,GMApplePlayer.xcodeproj,Packages/GMPlayerKit/Sources/CFFmpeg,repos
