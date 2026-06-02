@@ -1,6 +1,6 @@
 <p>
    <h1 align="center">
-      <img  height="200" alt="GMApplePlayer" src="https://github.com/user-attachments/assets/ed124345-846a-4bf9-932b-d474a9df0610" /> <br> MApplePlayer <br> <br>
+      <img  height="200" alt="GMApplePlayer" src="https://github.com/user-attachments/assets/ed124345-846a-4bf9-932b-d474a9df0610" /> <br> GMApplePlayer <br> <br>
    </h1>
 </p>
 
