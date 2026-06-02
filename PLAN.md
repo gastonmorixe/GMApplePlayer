@@ -2,8 +2,8 @@
 
 A multiplatform (macOS / iOS / tvOS) SwiftUI app that plays MKV files (local or
 remote) through Apple's native `AVPlayerViewController`, using FFmpeg 8.1.1
-**linked directly into the app** to remux (stream-copy, no transcode) the MKV
-into a fragmented MP4 that AVFoundation can play. No embedded web server.
+**linked directly into the app** to remux (stream-copy, no transcode) ~~the MKV
+into a fragmented MP4 that AVFoundation can play. No embedded web server~~.
 
 ## Why FFmpeg is required at all
 
@@ -27,7 +27,7 @@ They define what "plays beautiful" can honestly mean.
 | H.264                           | sometimes                        | Supported, tag `avc1`                         | Stream-copy                                   |
 | AAC                             | common                           | Supported                                     | Stream-copy (+ `aac_adtstoasc` bsf if needed) |
 | AC-3 / E-AC-3 (Dolby Digital)   | common                           | Supported (mac/tvOS/iOS)                      | Stream-copy                                   |
-| TrueHD / DTS / DTS-HD          | premium tracks                   | **Not supported** by AVFoundation             | Skip; pick a compatible audio track instead   |
+| TrueHD / DTS / DTS-HD           | premium tracks                   | **Not supported** by AVFoundation             | Skip; pick a compatible audio track instead   |
 | FLAC / Opus / Vorbis in MP4     | sometimes                        | Not reliably supported in MP4 on all OSes     | Skip for now (out of remux-only scope)        |
 
 Key implication: we do **not** hardcode anything about the acceptance file. At
@@ -154,7 +154,7 @@ Assembled with `xcodebuild -create-xcframework` from the per-slice static libs
 
 ## Acceptance
 
-The **Dolby Vision Universe** demo (`~/Movies/Dolby Vision Universe demo (4K HDR HEVC).mkv`,
+The **Dolby Vision Universe** demo (`Dolby Vision Universe demo (4K HDR HEVC).mkv`,
 override with `GM_TEST_MKV`)
 plays in the Mac app via remux: 4K HDR10 HEVC video + AC-3 5.1 audio, with
 working seek. iOS/tvOS targets build and run the same code path. Honest scope:
