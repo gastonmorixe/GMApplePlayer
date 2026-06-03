@@ -1,11 +1,11 @@
 <p>
    <h1 align="center">
-      <img  height="200" alt="GMApplePlayer" src="https://github.com/user-attachments/assets/ed124345-846a-4bf9-932b-d474a9df0610" /> <br> GMApplePlayer <br> <br>
+      <img  height="200" alt="GMPlayer" src="https://github.com/user-attachments/assets/ed124345-846a-4bf9-932b-d474a9df0610" /> <br> GMPlayer <br> <br>
    </h1>
 </p>
 
 <p align="center">
-   <img height="684" alt="Screenshot GMApplePlayer MacOS App" src="https://github.com/user-attachments/assets/2e78ea46-a8b4-42ce-a755-8c349e3d429b" />
+   <img height="684" alt="Screenshot GMApplePlayer MacOS App" src="https://github.com/user-attachments/assets/4f755683-06ce-4862-8cee-c7861cd73ad7" />
 </p>
 
 
